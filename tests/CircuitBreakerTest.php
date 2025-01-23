@@ -4,14 +4,18 @@ namespace Omidrezasalari\CircuitBreakerBundle\Tests;
 
 use Omidrezasalari\CircuitBreakerBundle\Service\CircuitBreaker;
 use Omidrezasalari\CircuitBreakerBundle\Service\StorageInterface;
+use PHPUnit\Framework\MockObject\Exception;
 use PHPUnit\Framework\TestCase;
 
 class CircuitBreakerTest extends TestCase
 {
     private CircuitBreaker $circuitBreaker;
     private StorageInterface $storage;
-    private string $serviceName = "underTest_service";
+    private string $serviceName = "under_test_service";
 
+    /**
+     * @throws Exception
+     */
     protected function setUp(): void
     {
         $this->storage = $this->createMock(StorageInterface::class);
@@ -59,34 +63,6 @@ class CircuitBreakerTest extends TestCase
         $this->assertFalse($result, 'The circuit breaker should transition to half-open state after the timeout period.');
     }
 
-    public function testAttemptSuccessClosesCircuit(): void
-    {
-        $this->storage->expects($this->exactly(2))
-            ->method('set')
-            ->withConsecutive(
-                [CircuitBreaker::PREFIX . ":$this->serviceName:" . CircuitBreaker::STATE, CircuitBreaker::STATUS_CLOSED],
-                [CircuitBreaker::PREFIX . ":$this->serviceName:" . CircuitBreaker::FAILURES, 0]
-            );
-
-        $this->circuitBreaker->attemptSuccess($this->serviceName);
-    }
-
-    public function testAttemptFailureIncrementsFailuresAndOpensCircuit(): void
-    {
-        $this->storage->method('increment')
-            ->with(CircuitBreaker::PREFIX . ":$this->serviceName:" . CircuitBreaker::FAILURES)
-            ->willReturn(3);
-
-        $this->storage->expects($this->exactly(2))
-            ->method('set')
-            ->withConsecutive(
-                [CircuitBreaker::PREFIX . ":$this->serviceName:" . CircuitBreaker::STATE, CircuitBreaker::STATUS_OPEN],
-                [CircuitBreaker::PREFIX . ":$this->serviceName:" . CircuitBreaker::LAST_OPEND, $this->greaterThan(0)]
-            );
-
-        $this->circuitBreaker->attemptFailure($this->serviceName);
-    }
-
     public function testAttemptFailureDoesNotOpenCircuitWhenBelowThreshold(): void
     {
         $this->storage->method('increment')
@@ -95,6 +71,53 @@ class CircuitBreakerTest extends TestCase
 
         $this->storage->expects($this->never())
             ->method('set');
+
+        $this->circuitBreaker->attemptFailure($this->serviceName);
+    }
+
+    public function testAttemptSuccessClosesCircuit(): void
+    {
+        $stateKey = CircuitBreaker::PREFIX . ":$this->serviceName:" . CircuitBreaker::STATE;
+        $failuresKey = CircuitBreaker::PREFIX . ":$this->serviceName:" . CircuitBreaker::FAILURES;
+
+        $this->storage->expects($this->exactly(2))
+            ->method('set')
+            ->willReturnCallback(function ($key, $value) use ($stateKey, $failuresKey) {
+                if ($key === $stateKey) {
+                    $this->assertEquals(CircuitBreaker::STATUS_CLOSED, $value);
+                } elseif ($key === $failuresKey) {
+                    $this->assertEquals(0, $value);
+                } else {
+                    $this->fail("Error to 'set': $key");
+                }
+                return true;
+            });
+
+        $this->circuitBreaker->attemptSuccess($this->serviceName);
+    }
+
+    public function testAttemptFailureIncrementsFailuresAndOpensCircuit(): void
+    {
+        $failuresKey = CircuitBreaker::PREFIX . ":$this->serviceName:" . CircuitBreaker::FAILURES;
+        $stateKey = CircuitBreaker::PREFIX . ":$this->serviceName:" . CircuitBreaker::STATE;
+        $lastOpenedKey = CircuitBreaker::PREFIX . ":$this->serviceName:" . CircuitBreaker::LAST_OPEND;
+
+        $this->storage->method('increment')
+            ->with($failuresKey)
+            ->willReturn(3);
+
+        $this->storage->expects($this->exactly(2))
+            ->method('set')
+            ->willReturnCallback(function ($key, $value) use ($stateKey, $lastOpenedKey) {
+                if ($key === $stateKey) {
+                    $this->assertEquals(CircuitBreaker::STATUS_OPEN, $value);
+                } elseif ($key === $lastOpenedKey) {
+                    $this->assertGreaterThan(0, $value);
+                } else {
+                    $this->fail("Error to 'set': $key");
+                }
+                return true;
+            });
 
         $this->circuitBreaker->attemptFailure($this->serviceName);
     }
