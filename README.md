@@ -83,7 +83,7 @@ Here’s an example of how to use the CircuitBreaker service:
 ```php
 use Omidrezasalari\CircuitBreakerBundle\Service\CircuitBreaker;
 
-class SomeService
+class YourService
 {
     private CircuitBreaker $circuitBreaker;
 
@@ -126,47 +126,6 @@ Called when a service operation is successful. Resets the failure count and clos
 ### `attemptFailure(string $serviceName): void`
 
 Called when a service operation fails. Increments the failure count. If the failure threshold is reached, the circuit breaker will open.
-
----
-
-## Redis Storage
-
-By default, the bundle uses `RedisStorage` for storing the state of the circuit breaker in Redis. Here's a quick overview of how `RedisStorage` works:
-
-```php
-namespace Omidrezasalari\CircuitBreakerBundle\Service;
-
-class RedisStorage implements StorageInterface
-{
-    private Redis $redis;
-
-    public function __construct(string $host = '127.0.0.1', int $port = 6379)
-    {
-        $this->redis = new Redis();
-        $this->redis->connect($host, $port);
-    }
-
-    public function get(string $key): mixed
-    {
-        return $this->redis->get($key);
-    }
-
-    public function set(string $key, mixed $value, int $ttl = 0): bool
-    {
-        return $ttl > 0 ? $this->redis->set($key, $value, $ttl) : $this->redis->set($key, $value);
-    }
-
-    public function increment(string $key): int
-    {
-        return $this->redis->incr($key);
-    }
-
-    public function expire(string $key, int $ttl): bool
-    {
-        return $this->redis->expire($key, $ttl);
-    }
-}
-```
 
 ---
 

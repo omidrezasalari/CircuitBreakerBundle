@@ -2,53 +2,42 @@
 
 namespace Omidrezasalari\CircuitBreakerBundle\Service;
 
-use Redis;
+use Predis\Client;
 
 class RedisStorage implements StorageInterface
 {
-    private Redis $redis;
+    private Client $redis;
 
-    /**
-     * @throws \RedisException
-     */
     public function __construct(string $host = '127.0.0.1', int $port = 6379)
     {
-        $this->redis = new Redis();
-        $this->redis->connect($host, $port);
+        $this->redis = new Client([
+            'scheme' => 'tcp',
+            'host' => $host,
+            'port' => $port,
+        ]);
     }
 
-    /**
-     * @throws \RedisException
-     */
-    public function get(string $key): mixed
+    public function get(string $key): ?string
     {
         return $this->redis->get($key);
     }
 
-    /**
-     * @throws \RedisException
-     */
     public function set(string $key, mixed $value, int $ttl = 0): bool
     {
         if ($ttl > 0) {
-            return $this->redis->set($key, $value, $ttl);
+            return (bool) $this->redis->setex($key, $ttl, $value);
         }
-        return $this->redis->set($key, $value);
+        return (bool) $this->redis->set($key, $value);
     }
 
-    /**
-     * @throws \RedisException
-     */
     public function increment(string $key): int
     {
         return $this->redis->incr($key);
     }
 
-    /**
-     * @throws \RedisException
-     */
+
     public function expire(string $key, int $ttl): bool
     {
-        return $this->redis->expire($key, $ttl);
+        return (bool) $this->redis->expire($key, $ttl);
     }
 }
