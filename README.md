@@ -134,7 +134,7 @@ Called when a service operation fails. Increments the failure count. If the fail
 To run the tests for the bundle, you can use PHPUnit:
 
 ```bash
-phpunit --bootstrap=vendor/autoload.php tests
+vendor/bin/phpunit 
 ```
 
 ---
