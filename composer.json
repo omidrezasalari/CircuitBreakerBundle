@@ -1,0 +1,16 @@
+{
+  "name": "omidrezasalari/circuit-breaker-bundle",
+  "type": "symfony-bundle",
+  "description": "A Symfony bundle implementing the Circuit Breaker pattern.",
+  "autoload": {
+    "psr-4": {
+      "Omidrezasalari\\CircuitBreakerBundle\\": "src/"
+    }
+  },
+  "require": {
+    "php": ">=8.1",
+    "ext-redis": "*",
+    "symfony/framework-bundle": "^6.4"
+  }
+}
+

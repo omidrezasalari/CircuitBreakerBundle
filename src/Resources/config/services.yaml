@@ -1,0 +1,10 @@
+services:
+  Omidrezasalari\CircuitBreakerBundle\Service\RedisStorage:
+    arguments:
+      $host: '%env(REDIS_HOST)%'
+      $port: '%env(REDIS_PORT)%'
+  Omidrezasalari\CircuitBreakerBundle\Service\CircuitBreaker:
+    arguments:
+      $storage: '@Omidrezasalari\CircuitBreakerBundle\Service\RedisStorage'
+      $failureTreshHold: '%env(FAILURE_THRESHOLD)%'
+      $timeoutPeriod: '%env(TIMEOUT_PERIOD)%'
