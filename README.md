@@ -24,7 +24,7 @@ After installing, register the bundle in your `config/bundles.php`:
 ```php
 return [
     // Other bundles...
-    Omidrezasalari\CircuitBreakerBundle\OmidrezasalariCircuitBreakerBundle::class => ['all' => true],
+    Omidrezasalari\CircuitBreakerBundle\CircuitBreakerBundle::class => ['all' => true],
 ];
 ```
 
@@ -35,17 +35,28 @@ return [
 The circuit breaker bundle uses a configurable failure threshold and timeout period. You can configure these parameters in your `config/services.yaml`.
 
 ```yaml
+#.env
+REDIS_HOST=localhost
+REDIS_PORT=6379
+FAILURE_THRESHOLD=5
+TIMEOUT_PERIOD=60
+```
+
+
+```yaml
 # config/services.yaml
 parameters:
-    circuit_breaker.failure_threshold: 5
-    circuit_breaker.timeout_period: 60
+  redis_host: '%env(REDIS_HOST)%'
+  redis_port: '%env(REDIS_PORT)%'
+  circuit_breaker.failure_threshold: '%env(FAILURE_THRESHOLD)%'
+  circuit_breaker.timeout_period: '%env(TIMEOUT_PERIOD)%'
 
 services:
-    Omidrezasalari\CircuitBreakerBundle\Service\CircuitBreaker:
-        arguments:
-            $failureTreshHold: '%circuit_breaker.failure_threshold%'
-            $timeoutPeriod: '%circuit_breaker.timeout_period%'
-            $storage: '@App\Service\RedisStorage'
+  Omidrezasalari\CircuitBreakerBundle\Service\CircuitBreaker:
+    arguments:
+      $storage: '@App\Service\RedisStorage'
+      $failureTreshHold: '%circuit_breaker.failure_threshold%'
+      $timeoutPeriod: '%circuit_breaker.timeout_period%'
 ```
 
 ### Custom Storage

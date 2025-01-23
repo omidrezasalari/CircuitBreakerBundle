@@ -1,10 +1,16 @@
+parameters:
+  redis_host: '%env(REDIS_HOST)%'
+  redis_port: '%env(REDIS_PORT)%'
+  circuit_breaker.failure_threshold: '%env(FAILURE_THRESHOLD)%'
+  circuit_breaker.timeout_period: '%env(TIMEOUT_PERIOD)%'
+
 services:
   Omidrezasalari\CircuitBreakerBundle\Service\RedisStorage:
     arguments:
-      $host: '%env(REDIS_HOST)%'
-      $port: '%env(REDIS_PORT)%'
+      $host: '%redis_host%'
+      $port: '%redis_port%'
   Omidrezasalari\CircuitBreakerBundle\Service\CircuitBreaker:
     arguments:
       $storage: '@Omidrezasalari\CircuitBreakerBundle\Service\RedisStorage'
-      $failureTreshHold: '%env(FAILURE_THRESHOLD)%'
-      $timeoutPeriod: '%env(TIMEOUT_PERIOD)%'
+      $failureTreshHold: '%circuit_breaker.failure_threshold%'
+      $timeoutPeriod: '%circuit_breaker.timeout_period%'
