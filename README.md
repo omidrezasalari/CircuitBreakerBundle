@@ -1,23 +1,52 @@
 
 # Circuit Breaker Bundle
-
-This is a Symfony bundle that implements a circuit breaker pattern with Redis as the storage mechanism. It provides an easy way to protect services by preventing repeated failures and can be easily swapped with another storage technology.
+This package is a **Symfony bundle** that implements the Circuit Breaker pattern. It helps protect your services from repeated requests when failures occur. The package is designed to allow you to easily change the storage mechanism (e.g., Redis, APCu, or custom implementations).
 
 ## Features
-
-- **Circuit Breaker Pattern:** Protects services by stopping repeated failed attempts after a set number of failures.
-- **Redis Storage:** Uses Redis to store state information for the circuit breaker. Can be replaced with another storage mechanism via an interface.
-- **Customizable:** Configure failure thresholds and timeout periods.
+- **Circuit Breaker Pattern:** Prevents repeated requests after multiple failures.
+- **Flexible Storage:** By default, it uses APCu, but you can switch to Redis or any custom storage implementation.
+- **Configurable:** Dynamically configure failure thresholds and timeout periods via Symfony configuration files.
+- **Symfony 6+ Compatible:** Integrates seamlessly with modern Symfony projects.
 
 ---
 
 ## Installation
 
-You can install the `CircuitBreakerBundle` in your Symfony project using Composer.
+### 1. APCu Implementation (Optimized and Persistent in Memory)
+
+APCu is an internal PHP cache that stores data in shared memory and can be accessed across different requests on a server.
+#### 1.1 Install and Enable APCu
+
+Before using APCu as a storage mechanism for the Circuit Breaker bundle, ensure that APCu is installed and enabled on your server.
+
+**1.2 Check if APCu is installed:**
+
+```bash
+php -m | grep apcu
+````
+
+#### If it's not installed, you can install it with the following commands:
+* For Linux (Ubuntu/Debian):
+````
+sudo apt install php-apcu
+````
+* For macOS:
+````
+brew install php-apcu
+````
+
+#### 1.3 Enable APCu for CLI (Command Line Interface):
+
+Edit your ``php.ini`` file to enable APCu for the CLI:
+````ini
+apc.enable_cli = 1
+````
+
+### 2. Install the package via Composer, run the following command:
 
 ```bash
 composer require omidrezasalari/circuit-breaker-bundle
-```
+````
 
 After installing, register the bundle in your `config/bundles.php`:
 
@@ -52,16 +81,45 @@ parameters:
   circuit_breaker.timeout_period: '%env(TIMEOUT_PERIOD)%'
 
 services:
+  Omidrezasalari\CircuitBreakerBundle\Service\RedisStorage:
+    arguments:
+      $host: '%redis_host%'
+      $port: '%redis_port%'
+
+  Omidrezasalari\CircuitBreakerBundle\Service\ApcuStorage: ~
+
   Omidrezasalari\CircuitBreakerBundle\Service\CircuitBreaker:
     arguments:
-      $storage: '@App\Service\RedisStorage'
       $failureTreshHold: '%circuit_breaker.failure_threshold%'
       $timeoutPeriod: '%circuit_breaker.timeout_period%'
+
+```
+### Package Configuration File (circuit_breaker.yaml):
+This file is placed under the ```config/packages/``` directory and allows users to define custom configurations for the package. The file looks like this
+
+```yaml
+# config/packages/circuit_breaker.yaml
+circuit_breaker:
+  # By default, storage_service is set to ApcuStorage. You can change it to RedisStorage or any custom service.
+  storage_service: 'Omidrezasalari\CircuitBreakerBundle\Service\ApcuStorage'
+  failure_threshold: 5
+  timeout_period: 60
 ```
 
+### Configuration Details:
+#### Storage Service:
+By default, the storage_service is set to ```ApcuStorage```. If you prefer to use ```RedisStorage```, simply change this value in ```circuit_breaker.yaml```:
+````yaml
+circuit_breaker:
+  storage_service: 'Omidrezasalari\CircuitBreakerBundle\Service\RedisStorage'
+  failure_threshold: 5
+  timeout_period: 60 
+````
+#### ```failure_threshold``` and ```timeout_period``` parameters:
+These values control how many failures are allowed before the circuit breaker trips and for how long it stays open.
 ### Custom Storage
 
-The bundle comes with a default `RedisStorage` implementation. If you want to use a different storage solution, implement the `StorageInterface` and pass it to the `CircuitBreaker` service.
+The bundle comes with a default `ApcuStorage` implementation. If you want to use a different storage solution, implement the `StorageInterface` and pass it to the `CircuitBreaker` service.
 
 ```php
 namespace App\Service;
