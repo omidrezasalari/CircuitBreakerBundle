@@ -9,8 +9,10 @@ services:
     arguments:
       $host: '%redis_host%'
       $port: '%redis_port%'
+
+  Omidrezasalari\CircuitBreakerBundle\Service\ApcuStorage: ~
+
   Omidrezasalari\CircuitBreakerBundle\Service\CircuitBreaker:
     arguments:
-      $storage: '@Omidrezasalari\CircuitBreakerBundle\Service\RedisStorage'
       $failureTreshHold: '%circuit_breaker.failure_threshold%'
       $timeoutPeriod: '%circuit_breaker.timeout_period%'
