@@ -100,7 +100,6 @@ This file is placed under the ```config/packages/``` directory and allows users 
 ```yaml
 # config/packages/circuit_breaker.yaml
 circuit_breaker:
-  # By default, storage_service is set to ApcuStorage. You can change it to RedisStorage or any custom service.
   storage_service: 'Omidrezasalari\CircuitBreakerBundle\Service\ApcuStorage'
   failure_threshold: 5
   timeout_period: 60
